@@ -1,0 +1,182 @@
+package project1;
+
+import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.TextArea;
+import javafx.scene.layout.VBox;
+import javafx.stage.Stage;
+import javafx.scene.text.Font;
+import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import edu.cmu.sphinx.api.Configuration;
+import edu.cmu.sphinx.api.LiveSpeechRecognizer;
+import edu.cmu.sphinx.api.SpeechResult;
+
+import java.io.IOException;
+
+public class VoiceAssistantGUI extends Application {
+
+    private TextArea outputArea; // Text area to display recognized commands
+    private LiveSpeechRecognizer recognizer;
+
+    public static void main(String[] args) {
+        launch(args); // Start the JavaFX application
+    }
+
+    @Override
+    public void start(Stage primaryStage) {
+        // Set up the GUI components
+        outputArea = new TextArea();
+        outputArea.setEditable(false); // Make the text area read-only
+        outputArea.setWrapText(true);  // Allow text wrapping
+        outputArea.setStyle("-fx-font-family: 'Arial'; -fx-font-size: 14px; -fx-text-fill: #333333; -fx-background-color: #f4f4f4;");
+        
+        Button startButton = new Button("Start Listening");
+        startButton.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-size: 16px; -fx-padding: 10px 20px; -fx-background-radius: 10px;");
+        startButton.setOnAction(e -> startVoiceAssistant()); // Start the voice assistant on button click
+
+        // Add a label and icon for the voice assistant
+        Label titleLabel = new Label("Voice Assistant");
+        titleLabel.setFont(new Font("Arial", 24));
+        titleLabel.setStyle("-fx-text-fill: #2e8b57; -fx-font-weight: bold;");
+
+        // You can add an image icon for the assistant
+        ImageView icon = new ImageView(new Image("file:src/project1/assistant-icon.png"));
+        icon.setFitWidth(40);
+        icon.setFitHeight(40);
+
+        // Layout with VBox and image icon
+        VBox layout = new VBox(20, titleLabel, icon, startButton, outputArea);
+        layout.setStyle("-fx-padding: 20px; -fx-background-color: #f0f8ff;");
+        layout.setSpacing(15);
+        
+        Scene scene = new Scene(layout, 500, 400);
+        
+        primaryStage.setTitle("Voice Assistant");
+        primaryStage.setScene(scene);
+        primaryStage.show();
+    }
+
+    private void startVoiceAssistant() {
+        // Set up the Sphinx recognizer
+        Configuration config = new Configuration();
+        config.setAcousticModelPath("resource:/edu/cmu/sphinx/models/en-us/en-us");
+        config.setDictionaryPath("file:///C:/Users/hp/eclipse-workspace/project1/src/project1/5854.dic");
+        config.setLanguageModelPath("file:///C:/Users/hp/eclipse-workspace/project1/src/project1/5854.lm");
+
+        try {
+            recognizer = new LiveSpeechRecognizer(config);
+            outputArea.appendText("Listening for commands...\n");
+            recognizer.startRecognition(true);
+
+            // Create a new thread for speech recognition to avoid blocking the GUI
+            new Thread(() -> {
+                SpeechResult result;
+                while ((result = recognizer.getResult()) != null) {
+                    String voiceCommand = result.getHypothesis();
+                    outputArea.appendText("Recognized: " + voiceCommand + "\n");
+
+                    // Handle voice commands
+                    try {
+                        switch (voiceCommand.toLowerCase()) {
+                        case "shutdown the computer":
+                            try {
+                                new ProcessBuilder("cmd.exe", "/c", "shutdown -s -t 0").start();
+                                outputArea.appendText("Shutting down the computer.\n");
+                            } catch (IOException ex) {
+                                outputArea.appendText("Failed to shut down the computer.\n");
+                            }
+                            break;
+                        case "restart the computer":
+                            try {
+                                new ProcessBuilder("cmd.exe", "/c", "shutdown -r -t 0").start();
+                                outputArea.appendText("Restarting the computer.\n");
+                            } catch (IOException ex) {
+                                outputArea.appendText("Failed to restart the computer.\n");
+                            }
+                            break;
+                        case "change wallpaper":
+                            try {
+                                new ProcessBuilder("cmd.exe", "/c", "RUNDLL32.EXE user32.dll,UpdatePerUserSystemParameters").start();
+                                outputArea.appendText("Changed wallpaper.\n");
+                            } catch (IOException ex) {
+                                outputArea.appendText("Failed to change wallpaper.\n");
+                            }
+                            break;
+
+                        case "put the computer to sleep":
+                            try {
+                                new ProcessBuilder("cmd.exe", "/c", "rundll32.exe powrprof.dll,SetSuspendState 0,1,0").start();
+                                outputArea.appendText("Computer is going to sleep.\n");
+                            } catch (IOException ex) {
+                                outputArea.appendText("Failed to put the computer to sleep.\n");
+                            }
+                            break;
+
+
+
+                            case "open chrome":
+                                new ProcessBuilder("cmd.exe", "/c", "start chrome").start();
+                                outputArea.appendText("Opened Chrome.\n");
+                                break;
+
+                            case "close chrome":
+                                new ProcessBuilder("cmd.exe", "/c", "TASKKILL /IM chrome.exe").start();
+                                outputArea.appendText("Closed Chrome.\n");
+                                break;
+
+                            case "open notepad":
+                                new ProcessBuilder("cmd.exe", "/c", "start notepad").start();
+                                outputArea.appendText("Opened Notepad.\n");
+                                break;
+
+                            case "close notepad":
+                                new ProcessBuilder("cmd.exe", "/c", "TASKKILL /IM notepad.exe").start();
+                                outputArea.appendText("Closed Notepad.\n");
+                                break;
+
+                            case "open youtube":
+                                new ProcessBuilder("cmd.exe", "/c", "start https://www.youtube.com").start();
+                                outputArea.appendText("Opened YouTube.\n");
+                                break;
+
+                            case "close youtube":
+                                try {
+                                    // Close Chrome by forcefully killing its processes
+                                    new ProcessBuilder("cmd.exe", "/c", "TASKKILL /IM chrome.exe /F").start();
+                                    outputArea.appendText("Closed Chrome (and YouTube tab).\n");
+                                } catch (IOException ex) {
+                                    outputArea.appendText("Failed to close Chrome: " + ex.getMessage() + "\n");
+                                }
+                                break;
+
+                            case "increase volume":
+                                for (int i = 0; i < 5; i++) {
+                                    Runtime.getRuntime().exec("C:\\Users\\hp\\Downloads\\nircmd.exe changesysvolume 2000");
+                                }
+                                outputArea.appendText("Increased Volume.\n");
+                                break;
+
+                            case "decrease volume":
+                                for (int i = 0; i < 5; i++) {
+                                    Runtime.getRuntime().exec("C:\\Users\\hp\\Downloads\\nircmd.exe changesysvolume -2000");
+                                }
+                                outputArea.appendText("Decreased Volume.\n");
+                                break;
+
+                            default:
+                                outputArea.appendText("Command not recognized.\n");
+                                break;
+                        }
+                    } catch (IOException e) {
+                        outputArea.appendText("Error executing command: " + e.getMessage() + "\n");
+                    }
+                }
+            }).start();
+        } catch (IOException e) {
+            outputArea.appendText("Error setting up recognizer: " + e.getMessage() + "\n");
+        }
+    }
+}
