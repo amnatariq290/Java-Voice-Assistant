@@ -47,7 +47,7 @@ Place these JAR files inside the `lib/` folder (download from the [Sphinx4 GitHu
 1. **Clone or Download the Project**
 
 ```bash
-git clone https://github.com/yourusername/speech-recognition-java.git
+git clone https://github.com/amnatariq290/speech-recognition-java.git
 cd speech-recognition-java
 
 Open in your IDE
